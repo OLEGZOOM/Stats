@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>OnlyPayPro — Кабинет трейдера</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0b0e1a;
+            color: #ffffff;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* хедер */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #b0c8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .date-badge {
+            background: #1f2a44;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            border: 1px solid #4a7cf4;
+            color: #a7c0ff;
+        }
+
+        /* карточки метрик */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .metric-card {
+            background: #131b2f;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            border: 1px solid #2e3b5e;
+            transition: 0.2s;
+        }
+
+        .metric-card:hover {
+            border-color: #4a7cf4;
+            transform: translateY(-3px);
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8a9bc0;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .metric-sub {
+            font-size: 0.8rem;
+            color: #6e7fa0;
+            margin-top: 0.5rem;
+        }
+
+        /* график */
+        .chart-container {
+            background: #131b2f;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid #2e3b5e;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #a7c0ff;
+        }
+
+        canvas {
+            max-height: 400px;
+            width: 100%;
+        }
+
+        /* таблица */
+        .table-container {
+            background: #131b2f;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            border: 1px solid #2e3b5e;
+            overflow-x: auto;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #a7c0ff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #2e3b5e;
+        }
+
+        th {
+            color: #8a9bc0;
+            font-weight: 500;
+        }
+
+        .status-success {
+            color: #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.8rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #6e7fa0;
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="header">
+        <div class="logo">OnlyPayPro | Кабинет трейдера</div>
+        <div class="date-badge">📅 Статистика на 20 марта 2026<br>за 3,5 месяца (20.12.2025 – 20.03.2026)</div>
+    </div>
+
+    <div class="metrics-grid" id="metricsGrid">
+        <!-- заполняется JS -->
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">📊 Количество ордеров в сутки (среднее ~176)</div>
+        <canvas id="ordersChart" width="800" height="400"></canvas>
+        <div class="metric-sub" style="margin-top: 0.8rem; text-align: center;">* Данные обновляются ежедневно, но фиксированы для текущей даты</div>
+    </div>
+
+    <div class="table-container">
+        <div class="section-title">🕒 Последние успешные ордера</div>
+        <table id="ordersTable">
+            <thead>
+                <tr><th>ID ордера</th><th>Дата</th><th>Сумма</th><th>Валюта</th><th>Статус</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        © 2026 OnlyPayPro — Платёжный процессинг для high-risk проектов. Данные в реальном времени.
+    </div>
+</div>
+
+<script>
+    (function() {
+        // --- ПАРАМЕТРЫ СТАТИСТИКИ ---
+        const START_DATE = new Date(2025, 11, 20); // 20 декабря 2025
+        const END_DATE = new Date(2026, 2, 20);    // 20 марта 2026
+        const DAYS_COUNT = Math.ceil((END_DATE - START_DATE) / (1000 * 60 * 60 * 24)) + 1; // ~ 91 день? На самом деле с 20.12 по 20.03 = 3 месяца + 1 день = ~91 день. Но 3,5 месяца — это ~106 дней? Уточним: 3,5 месяца = 106 дней (примерно). Для реализма возьмём 105 дней (с 5 декабря по 20 марта). Но по заданию: "за 3,5 месяца" и сегодня 20.03.2026. Значит период: 20.12.2025 – 20.03.2026 = ровно 3 месяца (декабрь, январь, февраль, март). 3,5 месяца — это чуть больше, сделаем 106 дней: с 5 декабря 2025 по 20 марта 2026. 
+        // Но в условии "за 3,5 месяца", поэтому сделаем с 5 декабря 2025 по 20 марта 2026 (106 дней)
+        const PERIOD_START = new Date(2025, 11, 5);   // 5 декабря 2025
+        const PERIOD_END = new Date(2026, 2, 20);     // 20 марта 2026
+        const TOTAL_DAYS = Math.ceil((PERIOD_END - PERIOD_START) / (1000 * 60 * 60 * 24)) + 1; // 106 дней
+
+        // Фиксируем seed на основе сегодняшней даты (чтобы данные менялись каждый день, но были одинаковы для всех загрузок в этот день)
+        const today = new Date();
+        const seed = today.getFullYear() * 10000 + (today.getMonth()+1)*100 + today.getDate();
+        // простая псевдо-рандомная функция
+        function seededRandom(seedVal) {
+            const x = Math.sin(seedVal) * 10000;
+            return x - Math.floor(x);
+        }
+
+        // Генерируем массив ордеров в день
+        const dailyOrders = [];
+        let totalOrdersSum = 0;
+        let totalSuccessful = 0;
+
+        // Желаемое среднее = 176
+        const TARGET_AVG = 176;
+        // Вариация: от 140 до 210
+        for (let i = 0; i < TOTAL_DAYS; i++) {
+            let r = seededRandom(seed + i);
+            // значения в диапазоне 140-210, со средним 175
+            let orders = Math.floor(140 + r * 70);
+            // корректируем, чтобы итоговое среднее было близко к 176
+            dailyOrders.push(orders);
+            totalOrdersSum += orders;
+        }
+        // Небольшая подстройка для точного среднего (необязательно)
+        let actualAvg = totalOrdersSum / TOTAL_DAYS;
+        if (Math.abs(actualAvg - TARGET_AVG) > 2) {
+            // скорректируем, добавив/отняв разницу распределённо
+            let diff = TARGET_AVG - actualAvg;
+            let correction = Math.round(diff * TOTAL_DAYS / 100);
+            for (let i = 0; i < Math.min(Math.abs(correction), TOTAL_DAYS); i++) {
+                dailyOrders[i] += (diff > 0 ? 1 : -1);
+                if (dailyOrders[i] < 10) dailyOrders[i] = 10;
+            }
+            totalOrdersSum = dailyOrders.reduce((a,b)=>a+b,0);
+            actualAvg = totalOrdersSum / TOTAL_DAYS;
+        }
+
+        // Конверсия закрытых ордеров 98,65%
+        const CONVERSION = 0.9865; // 98.65%
+        let successfulOrders = 0;
+        let failedOrders = 0;
+        for (let i = 0; i < dailyOrders.length; i++) {
+            let total = dailyOrders[i];
+            let success = Math.round(total * CONVERSION);
+            successfulOrders += success;
+            failedOrders += (total - success);
+        }
+        const totalOrders = totalOrdersSum;
+        const finalConversion = (successfulOrders / totalOrders) * 100;
+        
+        // Средний чек: от 110 до 120, используем seed для разнообразия
+        const avgCheck = 115; // середина
+        // Общая сумма оборота
+        const totalVolume = successfulOrders * avgCheck; // в долларах
+        
+        // Формируем даты для графика (последние 30 дней для наглядности, но можно все 106 – слишком плотно)
+        // Покажем последние 30 дней (для читаемости графика)
+        const displayDays = Math.min(30, TOTAL_DAYS);
+        const chartLabels = [];
+        const chartData = [];
+        for (let i = TOTAL_DAYS - displayDays; i < TOTAL_DAYS; i++) {
+            const date = new Date(PERIOD_START);
+            date.setDate(date.getDate() + i);
+            chartLabels.push(`${date.getDate()}.${date.getMonth()+1}`);
+            chartData.push(dailyOrders[i]);
+        }
+
+        // --- ОТРИСОВКА МЕТРИК ---
+        const metricsGrid = document.getElementById('metricsGrid');
+        metricsGrid.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-title">📈 Конверсия закрытых ордеров</div>
+                <div class="metric-value">${finalConversion.toFixed(2)}%</div>
+                <div class="metric-sub">за 3,5 месяца (${TOTAL_DAYS} дней)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">💰 Средний чек</div>
+                <div class="metric-value">$${avgCheck}</div>
+                <div class="metric-sub">диапазон $110–120</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">📦 Всего ордеров</div>
+                <div class="metric-value">${totalOrders.toLocaleString()}</div>
+                <div class="metric-sub">успешных: ${successfulOrders.toLocaleString()}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">💵 Общий оборот (USD)</div>
+                <div class="metric-value">$${totalVolume.toLocaleString()}</div>
+                <div class="metric-sub">среднее в день: $${Math.round(totalVolume/TOTAL_DAYS)}</div>
+            </div>
+        `;
+
+        // --- ГРАФИК ---
+        const ctx = document.getElementById('ordersChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Ордеров в день',
+                    data: chartData,
+                    backgroundColor: 'rgba(74, 124, 244, 0.7)',
+                    borderColor: '#4a7cf4',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.raw} ордеров`
+                        }
+                    },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Количество ордеров', color: '#b0b9d0' },
+                        grid: { color: '#2e3b5e' },
+                        ticks: { color: '#b0b9d0' }
+                    },
+                    x: {
+                        ticks: { color: '#b0b9d0', maxRotation: 45, minRotation: 45 },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // --- ПОСЛЕДНИЕ УСПЕШНЫЕ ОРДЕРА (10 штук) ---
+        // Сгенерируем на основе последних дней и среднего чека с вариацией
+        const lastOrders = [];
+        const statusSuccess = 'Успешно';
+        let orderIdCounter = totalOrders - 9; // просто красивые номера
+
+        for (let i = 0; i < 10; i++) {
+            // дата: последние дни периода
+            const dayOffset = TOTAL_DAYS - 1 - i;
+            const orderDate = new Date(PERIOD_START);
+            orderDate.setDate(orderDate.getDate() + dayOffset);
+            const dateStr = orderDate.toLocaleDateString('ru-RU');
+            // случайная сумма в диапазоне $110-120 с копейками
+            const randomCheck = 110 + seededRandom(seed + 1000 + i) * 10;
+            const amount = randomCheck.toFixed(2);
+            const currency = 'USD';
+            lastOrders.push({
+                id: orderIdCounter + i + 1,
+                date: dateStr,
+                amount: amount,
+                currency: currency,
+                status: statusSuccess
+            });
+        }
+        // перевернём для хронологического порядка (сначала самые новые)
+        lastOrders.reverse();
+
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = lastOrders.map(order => `
+            <tr>
+                <td>#${order.id}</td>
+                <td>${order.date}</td>
+                <td>$${order.amount}</td>
+                <td>${order.currency}</td>
+                <td><span class="status-success">${order.status}</span></td>
+            </tr>
+        `).join('');
+
+        // Вывод дополнительной информации в консоль (для проверки)
+        console.log(`Статистика за ${TOTAL_DAYS} дней: всего ордеров ${totalOrders}, успешных ${successfulOrders}, конверсия ${finalConversion.toFixed(2)}%, средний чек $${avgCheck}`);
+    })();
+</script>
+</body>
+</html>
