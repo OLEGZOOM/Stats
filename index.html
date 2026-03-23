@@ -26,7 +26,6 @@
             margin: 0 auto;
         }
 
-        /* хедер */
         .header {
             display: flex;
             justify-content: space-between;
@@ -55,7 +54,6 @@
             color: #a7c0ff;
         }
 
-        /* карточки метрик */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -96,7 +94,6 @@
             margin-top: 0.5rem;
         }
 
-        /* график */
         .chart-container {
             background: #131b2f;
             border-radius: 1.5rem;
@@ -117,7 +114,6 @@
             width: 100%;
         }
 
-        /* таблица */
         .table-container {
             background: #131b2f;
             border-radius: 1.5rem;
@@ -173,7 +169,7 @@
 <div class="dashboard">
     <div class="header">
         <div class="logo">OnlyPayPro | Кабинет трейдера</div>
-        <div class="date-badge">📅 Статистика на 20 марта 2026<br> (20.12.2025 – 20.03.2026)</div>
+        <div class="date-badge">📅 Статистика на 23 марта 2026<br> (05.12.2025 – 23.03.2026)</div>
     </div>
 
     <div class="metrics-grid" id="metricsGrid">
@@ -183,7 +179,7 @@
     <div class="chart-container">
         <div class="chart-title">📊 Количество ордеров в сутки (среднее ~176)</div>
         <canvas id="ordersChart" width="800" height="400"></canvas>
-        <div class="metric-sub" style="margin-top: 0.8rem; text-align: center;">* Данные обновляются ежедневно, но фиксированы для текущей даты</div>
+        <div class="metric-sub" style="margin-top: 0.8rem; text-align: center;">* Данные обновлены 23.03.2026 — период 5 декабря 2025 – 23 марта 2026</div>
     </div>
 
     <div class="table-container">
@@ -203,44 +199,40 @@
 
 <script>
     (function() {
-        // --- ПАРАМЕТРЫ СТАТИСТИКИ ---
-        const START_DATE = new Date(2025, 11, 20); // 20 декабря 2025
-        const END_DATE = new Date(2026, 2, 20);    // 20 марта 2026
-        const DAYS_COUNT = Math.ceil((END_DATE - START_DATE) / (1000 * 60 * 60 * 24)) + 1; // ~ 91 день? На самом деле с 20.12 по 20.03 = 3 месяца + 1 день = ~91 день. Но 3,5 месяца — это ~106 дней? Уточним: 3,5 месяца = 106 дней (примерно). Для реализма возьмём 105 дней (с 5 декабря по 20 марта). Но по заданию: "за 3,5 месяца" и сегодня 20.03.2026. Значит период: 20.12.2025 – 20.03.2026 = ровно 3 месяца (декабрь, январь, февраль, март).  — это чуть больше, сделаем 106 дней: с 5 декабря 2025 по 20 марта 2026. 
-        // Но в условии "за 3,5 месяца", поэтому сделаем с 5 декабря 2025 по 20 марта 2026 (106 дней)
+        // --------------------------------------------------------------
+        // ОБНОВЛЕНИЕ СТАТИСТИКИ ПО 23 МАРТА 2026 (сегодняшняя дата)
+        // Период: 5 декабря 2025 – 23 марта 2026 (всего 109 дней)
+        // --------------------------------------------------------------
         const PERIOD_START = new Date(2025, 11, 5);   // 5 декабря 2025
-        const PERIOD_END = new Date(2026, 2, 20);     // 20 марта 2026
-        const TOTAL_DAYS = Math.ceil((PERIOD_END - PERIOD_START) / (1000 * 60 * 60 * 24)) + 1; // 106 дней
+        const PERIOD_END   = new Date(2026, 2, 23);   // 23 марта 2026
+        const TOTAL_DAYS = Math.ceil((PERIOD_END - PERIOD_START) / (1000 * 60 * 60 * 24)) + 1; // 109 дней (проверка: дек 27 + янв 31 + фев 28 + март 23 = 109)
 
-        // Фиксируем seed на основе сегодняшней даты (чтобы данные менялись каждый день, но были одинаковы для всех загрузок в этот день)
-        const today = new Date();
+        // Фиксируем seed на основе сегодняшней даты (23.03.2026), чтобы данные были стабильными для текущего дня
+        const today = new Date(2026, 2, 23); // 23 марта 2026
         const seed = today.getFullYear() * 10000 + (today.getMonth()+1)*100 + today.getDate();
-        // простая псевдо-рандомная функция
+        
+        // Простая псевдо-рандомная функция (детерминированная)
         function seededRandom(seedVal) {
             const x = Math.sin(seedVal) * 10000;
             return x - Math.floor(x);
         }
 
-        // Генерируем массив ордеров в день
+        // Генерируем массив количества ордеров в день (всего TOTAL_DAYS дней)
         const dailyOrders = [];
         let totalOrdersSum = 0;
-        let totalSuccessful = 0;
-
-        // Желаемое среднее = 176
-        const TARGET_AVG = 176;
-        // Вариация: от 140 до 210
+        
+        const TARGET_AVG = 176;   // целевое среднее ~176 ордеров в сутки
+        // Генерация с вариацией 140–210
         for (let i = 0; i < TOTAL_DAYS; i++) {
             let r = seededRandom(seed + i);
-            // значения в диапазоне 140-210, со средним 175
-            let orders = Math.floor(140 + r * 70);
-            // корректируем, чтобы итоговое среднее было близко к 176
+            let orders = Math.floor(140 + r * 70);  // диапазон 140..210
             dailyOrders.push(orders);
             totalOrdersSum += orders;
         }
-        // Небольшая подстройка для точного среднего (необязательно)
+        
+        // Небольшая подстройка, чтобы итоговое среднее было максимально близко к 176
         let actualAvg = totalOrdersSum / TOTAL_DAYS;
-        if (Math.abs(actualAvg - TARGET_AVG) > 2) {
-            // скорректируем, добавив/отняв разницу распределённо
+        if (Math.abs(actualAvg - TARGET_AVG) > 1.5) {
             let diff = TARGET_AVG - actualAvg;
             let correction = Math.round(diff * TOTAL_DAYS / 100);
             for (let i = 0; i < Math.min(Math.abs(correction), TOTAL_DAYS); i++) {
@@ -251,8 +243,8 @@
             actualAvg = totalOrdersSum / TOTAL_DAYS;
         }
 
-        // Конверсия закрытых ордеров 98,65%
-        const CONVERSION = 0.9865; // 98.65%
+        // Конверсия закрытых ордеров 98.65%
+        const CONVERSION = 0.9865;
         let successfulOrders = 0;
         let failedOrders = 0;
         for (let i = 0; i < dailyOrders.length; i++) {
@@ -264,13 +256,13 @@
         const totalOrders = totalOrdersSum;
         const finalConversion = (successfulOrders / totalOrders) * 100;
         
-        // Средний чек: от 110 до 120, используем seed для разнообразия
-        const avgCheck = 115; // середина
-        // Общая сумма оборота
-        const totalVolume = successfulOrders * avgCheck; // в долларах
+        // Средний чек — фиксированное значение 115$ (диапазон 110-120)
+        const avgCheck = 115;
+        const totalVolume = successfulOrders * avgCheck; // общий оборот в USD
         
-        // Формируем даты для графика (последние 30 дней для наглядности, но можно все 106 – слишком плотно)
-        // Покажем последние 30 дней (для читаемости графика)
+        // --------------------------------------------------------------
+        // ПОДГОТОВКА ДАННЫХ ДЛЯ ГРАФИКА (последние 30 дней)
+        // --------------------------------------------------------------
         const displayDays = Math.min(30, TOTAL_DAYS);
         const chartLabels = [];
         const chartData = [];
@@ -281,13 +273,15 @@
             chartData.push(dailyOrders[i]);
         }
 
-        // --- ОТРИСОВКА МЕТРИК ---
+        // --------------------------------------------------------------
+        // ОТРИСОВКА МЕТРИК (4 карточки)
+        // --------------------------------------------------------------
         const metricsGrid = document.getElementById('metricsGrid');
         metricsGrid.innerHTML = `
             <div class="metric-card">
                 <div class="metric-title">📈 Конверсия закрытых ордеров</div>
                 <div class="metric-value">${finalConversion.toFixed(2)}%</div>
-                <div class="metric-sub"> (${TOTAL_DAYS} дней)</div>
+                <div class="metric-sub"> (за ${TOTAL_DAYS} дней, стабильно 98.65%)</div>
             </div>
             <div class="metric-card">
                 <div class="metric-title">💰 Средний чек</div>
@@ -306,7 +300,9 @@
             </div>
         `;
 
-        // --- ГРАФИК ---
+        // --------------------------------------------------------------
+        // ГРАФИК (столбчатая диаграмма)
+        // --------------------------------------------------------------
         const ctx = document.getElementById('ordersChart').getContext('2d');
         new Chart(ctx, {
             type: 'bar',
@@ -347,20 +343,22 @@
             }
         });
 
-        // --- ПОСЛЕДНИЕ УСПЕШНЫЕ ОРДЕРА (10 штук) ---
-        // Сгенерируем на основе последних дней и среднего чека с вариацией
+        // --------------------------------------------------------------
+        // ПОСЛЕДНИЕ УСПЕШНЫЕ ОРДЕРА (10 штук) — данные за последние дни, включая 23.03.2026
+        // --------------------------------------------------------------
         const lastOrders = [];
-        const statusSuccess = 'Успешно';
-        let orderIdCounter = totalOrders - 9; // просто красивые номера
-
+        // orderIdCounter: просто красивые номера, начиная с общего количества минус 9
+        let orderIdCounter = totalOrders - 9;
+        
+        // Генерируем 10 последних ордеров, от самого нового (сегодня) к более старым
         for (let i = 0; i < 10; i++) {
-            // дата: последние дни периода
+            // день со смещением назад: i=0 → последний день (TOTAL_DAYS-1)
             const dayOffset = TOTAL_DAYS - 1 - i;
             const orderDate = new Date(PERIOD_START);
             orderDate.setDate(orderDate.getDate() + dayOffset);
             const dateStr = orderDate.toLocaleDateString('ru-RU');
-            // случайная сумма в диапазоне $110-120 с копейками
-            const randomCheck = 110 + seededRandom(seed + 1000 + i) * 10;
+            // Сумма чека в диапазоне 110-120 USD с двумя знаками
+            const randomCheck = 110 + seededRandom(seed + 2000 + i) * 10;
             const amount = randomCheck.toFixed(2);
             const currency = 'USD';
             lastOrders.push({
@@ -368,12 +366,12 @@
                 date: dateStr,
                 amount: amount,
                 currency: currency,
-                status: statusSuccess
+                status: 'Успешно'
             });
         }
-        // перевернём для хронологического порядка (сначала самые новые)
+        // Переворачиваем, чтобы в таблице первыми были самые свежие (сегодняшние)
         lastOrders.reverse();
-
+        
         const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = lastOrders.map(order => `
             <tr>
@@ -384,9 +382,11 @@
                 <td><span class="status-success">${order.status}</span></td>
             </tr>
         `).join('');
-
-        // Вывод дополнительной информации в консоль (для проверки)
-        console.log(`Статистика за ${TOTAL_DAYS} дней: всего ордеров ${totalOrders}, успешных ${successfulOrders}, конверсия ${finalConversion.toFixed(2)}%, средний чек $${avgCheck}`);
+        
+        // Дополнительно выводим в консоль сводку для проверки (не влияет на интерфейс)
+        console.log(`✅ Статистика обновлена на 23.03.2026. Период: 5 дек 2025 – 23 мар 2026 (${TOTAL_DAYS} дней).`);
+        console.log(`📊 Всего ордеров: ${totalOrders.toLocaleString()}, успешных: ${successfulOrders.toLocaleString()}, конверсия: ${finalConversion.toFixed(2)}%, средний чек: $${avgCheck}`);
+        console.log(`📈 Среднее кол-во ордеров в день: ${Math.round(totalOrders/TOTAL_DAYS)} (целевое 176)`);
     })();
 </script>
 </body>
